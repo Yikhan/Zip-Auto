@@ -1,0 +1,43 @@
+{
+  "name": "zip-auto",
+  "version": "1.0.0",
+  "main": "dist-electron/main/index.js",
+  "description": "Auto Bandizip helper",
+  "author": "Yihan",
+  "license": "MIT",
+  "private": true,
+  "keywords": [
+    "electron",
+    "rollup",
+    "vite",
+    "vue3",
+    "vue"
+  ],
+  "debug": {
+    "env": {
+      "VITE_DEV_SERVER_URL": "http://127.0.0.1:3344/"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build && electron-builder",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.0.0",
+    "electron": "^23.1.1",
+    "electron-builder": "^23.6.0",
+    "sass": "^1.59.3",
+    "typescript": "^4.9.5",
+    "unplugin-auto-import": "^0.15.1",
+    "unplugin-vue-components": "^0.24.1",
+    "vite": "^4.1.4",
+    "vite-plugin-electron": "^0.11.1",
+    "vite-plugin-electron-renderer": "^0.12.1",
+    "vue": "^3.2.47",
+    "vue-tsc": "^1.1.7"
+  },
+  "dependencies": {
+    "@varlet/ui": "^2.9.0"
+  }
+}
