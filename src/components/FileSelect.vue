@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { parse, join, basename } from 'path'
 import { unlink } from 'fs'
 import { FileTask } from '~/interfaces'
@@ -12,8 +12,10 @@ const inputExtraFiles = ref<string[]>(config.defaultExtraDirectory)
 const outputDirectory = ref<string>(config.defaultOutputDirectory)
 const password = ref<string>(config.defaultPassword)
 
-// run button control
 const isRunning = ref(false)
+const isRunButtonEnabled = computed(() => {
+  return !isRunning.value && inputFiles.length > 0 && outputDirectory.value
+})
 
 async function setOutputDirectory() {
   const result = await invoke('open-folder')
@@ -33,8 +35,10 @@ async function setInputFiles() {
       done: false,
     })
   })
+}
 
-  console.log(inputFiles)
+function clearInputFiles() {
+  inputFiles.splice(0, inputFiles.length)
 }
 
 async function setExtraFileToCompress() {
@@ -48,12 +52,19 @@ async function run() {
   isRunning.value = true
   // step1. 压缩视频文件
   for (let file of inputFiles) {
+    if (file.done) {
+      continue
+    }
+
     file.processing = true
-    file.done = false
     await compressFile(file.filePath, outputDirectory.value, '.zip', [], password.value)
   }
   // step2. 再压缩一次
   for (let file of inputFiles) {
+    if (file.done) {
+      continue
+    }
+
     const filePathFromLastStep = join(outputDirectory.value, parse(file.filePath).name + '.zip')
     await compressFile(filePathFromLastStep, outputDirectory.value, '.video', inputExtraFiles.value)
     // delete the file from last step
@@ -74,20 +85,21 @@ async function run() {
   <section>
     <var-space justify="space-between">
       <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
-      <var-button type="success" @click="run" :disabled="isRunning || inputFiles.length === 0"
-        >开始压缩</var-button
-      >
+      <var-button type="success" @click="run" :disabled="!isRunButtonEnabled">开始压缩</var-button>
     </var-space>
-    <p class="output-directory">{{ outputDirectory }}</p>
+    <p class="output-directory">{{ outputDirectory || '未选择输出文件夹' }}</p>
   </section>
 
   <section>
     <div>
       <var-button type="info" @click="setExtraFileToCompress">选择附加文件</var-button>
     </div>
-    <p :key="index" v-for="(file, index) in inputExtraFiles" class="file-row">
-      文件 {{ index + 1 }} : {{ file }}
-    </p>
+    <div v-if="inputExtraFiles.length">
+      <p :key="index" v-for="(file, index) in inputExtraFiles" class="file-row">
+        文件 {{ index + 1 }} : {{ file }}
+      </p>
+    </div>
+    <p v-else class="file-row">无附加文件</p>
   </section>
 
   <section class="password">
@@ -95,21 +107,25 @@ async function run() {
   </section>
 
   <section>
-    <div>
+    <var-space>
       <var-button type="primary" @click="setInputFiles">选择输入文件</var-button>
+      <var-button type="success" @click="clearInputFiles">清空列表</var-button>
+    </var-space>
+    <div v-if="inputFiles.length">
+      <var-row :key="index" v-for="(file, index) in inputFiles" class="file-row">
+        <var-col :span="16"> 文件 {{ index + 1 }} : {{ basename(file.filePath) }} </var-col>
+        <var-col :span="8" class="file-processing">
+          <var-loading v-if="file.processing" type="cube" color="#00c48f" />
+          <var-icon
+            v-if="file.done"
+            name="checkbox-marked-circle"
+            :size="24"
+            color="var(--color-success)"
+          />
+        </var-col>
+      </var-row>
     </div>
-    <var-row :key="index" v-for="(file, index) in inputFiles" class="file-row">
-      <var-col :span="16"> 文件 {{ index + 1 }} : {{ basename(file.filePath) }} </var-col>
-      <var-col :span="8" class="file-processing">
-        <var-loading v-if="file.processing" type="cube" color="#00c48f" />
-        <var-icon
-          v-if="file.done"
-          name="checkbox-marked-circle"
-          :size="24"
-          color="var(--color-success)"
-        />
-      </var-col>
-    </var-row>
+    <p v-else class="file-row">未选择输入文件</p>
   </section>
 </template>
 
