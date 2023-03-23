@@ -1,98 +1,54 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { parse, join, basename } from 'path'
-import { unlink } from 'fs'
-import { FileTask } from '~/interfaces'
-import { compressFile } from '~/utils/bandizip'
-import { invoke } from '~/utils/channel'
-import config from '@/config/config.json'
+import { onBeforeMount } from 'vue'
+import { basename } from 'path'
 
-const inputFiles = reactive<FileTask[]>([])
-const inputExtraFiles = ref<string[]>(config.defaultExtraDirectory)
-const outputDirectory = ref<string>(config.defaultOutputDirectory)
-const password = ref<string>(config.defaultPassword)
+import { readConfigFile } from '../utils/file'
+import { useCompress, useExtra, useInput, useOutput } from './composables/select'
+import { useError } from './composables/error'
 
-const isRunning = ref(false)
-const isRunButtonEnabled = computed(() => {
-  return !isRunning.value && inputFiles.length > 0 && outputDirectory.value
+const { inputFiles, setInputFiles, clearInputFiles } = useInput()
+const { inputExtraFiles, setInputExtraFiles } = useExtra()
+const { outputDirectory, password, setOutputDirectory } = useOutput()
+const { isRunEnabled, run } = useCompress({
+  inputFiles,
+  inputExtraFiles,
+  outputDirectory,
+  password,
 })
+const { error, hasError } = useError()
 
-async function setOutputDirectory() {
-  const result = await invoke('open-folder')
-  if (!result) return
-
-  outputDirectory.value = result.filePaths[0]
-}
-
-async function setInputFiles() {
-  const result = await invoke('open-files')
-  if (!result) return
-
-  result.filePaths.forEach((file: string) => {
-    inputFiles.push({
-      filePath: file,
-      processing: false,
-      done: false,
-    })
-  })
-}
-
-function clearInputFiles() {
-  inputFiles.splice(0, inputFiles.length)
-}
-
-async function setExtraFileToCompress() {
-  const result = await invoke('open-files')
-  if (!result) return
-
-  inputExtraFiles.value = result.filePaths
-}
-
-async function run() {
-  isRunning.value = true
-  // step1. 压缩视频文件
-  for (let file of inputFiles) {
-    if (file.done) {
-      continue
-    }
-
-    file.processing = true
-    await compressFile(file.filePath, outputDirectory.value, '.zip', [], password.value)
+onBeforeMount(() => {
+  // 从配置文件中读取默认值
+  let config = {
+    defaultExtraDirectory: [],
+    defaultOutputDirectory: '',
+    defaultPassword: '',
   }
-  // step2. 再压缩一次
-  for (let file of inputFiles) {
-    if (file.done) {
-      continue
-    }
-
-    const filePathFromLastStep = join(outputDirectory.value, parse(file.filePath).name + '.zip')
-    await compressFile(filePathFromLastStep, outputDirectory.value, '.video', inputExtraFiles.value)
-    // delete the file from last step
-    unlink(filePathFromLastStep, (err: any) => {
-      if (err) {
-        console.log(err)
-      }
-    })
-    file.processing = false
-    file.done = true
+  try {
+    config = JSON.parse(readConfigFile())
+  } catch (err: any) {
+    setTimeout(() => {
+      error.value = err.message
+    }, 1000)
   }
-
-  isRunning.value = false
-}
+  inputExtraFiles.value = config.defaultExtraDirectory
+  outputDirectory.value = config.defaultOutputDirectory
+  password.value = config.defaultPassword
+})
 </script>
 
 <template>
   <section>
     <var-space justify="space-between">
       <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
-      <var-button type="success" @click="run" :disabled="!isRunButtonEnabled">开始压缩</var-button>
+      <var-button type="success" @click="run" :disabled="!isRunEnabled">开始压缩</var-button>
     </var-space>
     <p class="output-directory">{{ outputDirectory || '未选择输出文件夹' }}</p>
   </section>
 
   <section>
     <div>
-      <var-button type="info" @click="setExtraFileToCompress">选择附加文件</var-button>
+      <var-button type="info" @click="setInputExtraFiles">选择附加文件</var-button>
     </div>
     <div v-if="inputExtraFiles.length">
       <p :key="index" v-for="(file, index) in inputExtraFiles" class="file-row">
@@ -127,6 +83,16 @@ async function run() {
     </div>
     <p v-else class="file-row">未选择输入文件</p>
   </section>
+
+  <var-snackbar
+    v-model:show="hasError"
+    :duration="5000"
+    type="error"
+    position="bottom"
+    content-class="error"
+  >
+    {{ error }}
+  </var-snackbar>
 </template>
 
 <style lang="scss">
@@ -148,5 +114,14 @@ async function run() {
   color: whitesmoke;
   padding: 10px 12px;
   font-size: 14px;
+}
+
+.var-snackbar__wrapper {
+  width: auto;
+
+  .error {
+    word-wrap: break-word;
+    max-width: 400px;
+  }
 }
 </style>

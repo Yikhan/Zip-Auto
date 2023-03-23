@@ -1,13 +1,15 @@
 import { parse, join } from 'path'
 import { exec } from 'child_process'
 
-export async function compressFile(
-  filePath: string,
-  outputDirectory: string,
-  fileSuffix: string = '',
-  extraFils: string[] = [],
-  password: string = ''
-) {
+export async function compressFile(options: {
+  filePath: string
+  outputDirectory: string
+  fileSuffix?: string
+  extraFils?: string[]
+  password?: string
+}) {
+  const { filePath, outputDirectory, fileSuffix = '', extraFils = [], password = '' } = options
+
   let outputFileName = parse(filePath).name
   // add customized suffix
   if (fileSuffix) {
