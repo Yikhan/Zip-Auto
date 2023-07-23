@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onBeforeMount } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { basename } from 'path'
 
-import { readConfigFile } from '../utils/file'
+import { readConfigFile, writeConfigFile } from '~/utils/file'
 import { useCompress, useExtra, useInput, useOutput } from './composables/select'
 import { useError } from './composables/error'
+
+import ConfigDropdown from './ConfigDropdown.vue'
+import { Config } from '~/interfaces'
 
 const { inputFiles, setInputFiles, clearInputFiles } = useInput()
 const { inputExtraFiles, setInputExtraFiles } = useExtra()
@@ -17,32 +20,66 @@ const { isRunEnabled, run } = useCompress({
 })
 const { error, hasError } = useError()
 
-onBeforeMount(() => {
+const configFile = ref<{ configures: Config[] }>({
+  configures: [],
+})
+const currentConfig = ref<Config>({
+  name: '',
+  defaultExtraDirectory: [],
+  defaultOutputDirectory: '',
+  defaultPassword: '',
+})
+
+function readConfig() {
   // 从配置文件中读取默认值
-  let config = {
-    defaultExtraDirectory: [],
-    defaultOutputDirectory: '',
-    defaultPassword: '',
-  }
   try {
-    config = JSON.parse(readConfigFile())
+    configFile.value = JSON.parse(readConfigFile())
   } catch (err: any) {
     setTimeout(() => {
       error.value = err.message
     }, 1000)
   }
+}
+
+function onSelectConfig(config: Config) {
+  currentConfig.value = config
   inputExtraFiles.value = config.defaultExtraDirectory
   outputDirectory.value = config.defaultOutputDirectory
   password.value = config.defaultPassword
+}
+
+function onSaveConfig() {
+  const index = configFile.value.configures.findIndex(
+    (config) => config.name === currentConfig.value.name
+  )
+  // build new config
+  configFile.value.configures[index] = {
+    ...currentConfig.value,
+    defaultExtraDirectory: inputExtraFiles.value,
+    defaultOutputDirectory: outputDirectory.value,
+    defaultPassword: password.value,
+  }
+
+  writeConfigFile(JSON.stringify(configFile.value, null, 2))
+}
+
+onBeforeMount(() => {
+  readConfig()
+  onSelectConfig(configFile.value.configures[0])
 })
 </script>
 
 <template>
+  <section class="config">
+    <ConfigDropdown
+      :configures="configFile.configures"
+      :current-config="currentConfig"
+      @select:config="onSelectConfig"
+      @save:config="onSaveConfig"
+    />
+  </section>
   <section>
-    <var-space justify="space-between">
-      <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
-      <var-button type="success" @click="run" :disabled="!isRunEnabled">开始压缩</var-button>
-    </var-space>
+    <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
     <p class="output-directory">{{ outputDirectory || '未选择输出文件夹' }}</p>
   </section>
 
@@ -65,7 +102,8 @@ onBeforeMount(() => {
   <section>
     <var-space>
       <var-button type="primary" @click="setInputFiles">选择输入文件</var-button>
-      <var-button type="success" @click="clearInputFiles">清空列表</var-button>
+      <var-button type="warning" @click="clearInputFiles">清空列表</var-button>
+      <var-button type="success" @click="run" :disabled="!isRunEnabled">开始压缩</var-button>
     </var-space>
     <div v-if="inputFiles.length">
       <var-row :key="index" v-for="(file, index) in inputFiles" class="file-row">
@@ -86,7 +124,7 @@ onBeforeMount(() => {
 
   <var-snackbar
     v-model:show="hasError"
-    :duration="5000"
+    :duration="10000"
     type="error"
     position="bottom"
     content-class="error"
@@ -96,6 +134,10 @@ onBeforeMount(() => {
 </template>
 
 <style lang="scss">
+.config {
+  margin-bottom: 20px;
+}
+
 .file-row {
   padding: 10px 12px;
   font-size: 14px;

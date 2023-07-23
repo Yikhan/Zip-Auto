@@ -3,3 +3,10 @@ export interface FileTask {
   processing: boolean
   done: boolean
 }
+
+export interface Config {
+  name: string
+  defaultExtraDirectory: string[]
+  defaultOutputDirectory: string
+  defaultPassword: string
+}

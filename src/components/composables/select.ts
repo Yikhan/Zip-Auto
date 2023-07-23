@@ -128,8 +128,12 @@ export function useCompress(options: {
   async function run() {
     isRunning.value = true
 
-    await stepFirst()
-    await stepSecond()
+    try {
+      await stepFirst()
+      await stepSecond()
+    } catch (err) {
+      console.log(err)
+    }
 
     isRunning.value = false
   }
