@@ -51,6 +51,7 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
       contextIsolation: false,
+      sandbox: false
     },
     minWidth: 500,
     minHeight: 600,
@@ -58,7 +59,8 @@ async function createWindow() {
     height: 700,
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
+  if (process.env.VITE_DEV_SERVER_URL) {
+    // electron-vite-vue#298
     win.loadURL(url)
     // Open devTool if the app is not packaged
     win.webContents.openDevTools()
@@ -123,12 +125,12 @@ ipcMain.handle('open-win', (_, arg) => {
 // Folder dialog
 ipcMain.handle('open-folder', async () => {
   return await dialog.showOpenDialog(win, {
-    properties: ['openDirectory']
+    properties: ['openDirectory'],
   })
 })
 
 ipcMain.handle('open-files', async () => {
   return await dialog.showOpenDialog(win, {
-    properties: ['openFile', 'multiSelections']
+    properties: ['openFile', 'multiSelections'],
   })
 })

@@ -1,12 +1,13 @@
-export interface FileTask {
+export type FileTask = {
   filePath: string
   processing: boolean
   done: boolean
 }
 
-export interface Config {
+export type Config = {
   name: string
-  defaultExtraDirectory: string[]
+  defaultExtraFiles: string[]
   defaultOutputDirectory: string
   defaultPassword: string
+  id: number
 }

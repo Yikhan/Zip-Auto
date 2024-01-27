@@ -1,33 +1,98 @@
+<template>
+  <section class="config">
+    <ConfigDropdown
+      :configures="configFile.configures"
+      :current-config="currentConfig"
+      @select:config="onSelectConfig"
+      @save:config="onSaveConfig"
+    />
+  </section>
+
+  <section>
+    <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
+    <p class="output-directory">{{ outputDirectory || '未选择输出文件夹' }}</p>
+  </section>
+
+  <section class="password">
+    <var-input v-model="password" placeholder="压缩密码" :line="false" />
+  </section>
+
+  <section>
+    <ExtraFile :extra-files="extraFiles" @select:file="setExtraFiles" />
+  </section>
+
+  <section>
+    <var-space>
+      <var-button type="primary" @click="setInputFiles">选择输入文件</var-button>
+      <var-button type="warning" @click="clearInputFiles">清空列表</var-button>
+      <var-button type="success" @click="run" :disabled="!isRunEnabled">开始压缩</var-button>
+    </var-space>
+    <FileBoard :input-files="inputFiles" @drop:files="onDropFiles" @select:files="setInputFiles" />
+  </section>
+
+  <var-snackbar
+    v-model:show="hasError"
+    :duration="10000"
+    type="error"
+    position="bottom"
+    content-class="error"
+  >
+    {{ error }}
+  </var-snackbar>
+</template>
+
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue'
-import { basename } from 'path'
 
 import { readConfigFile, writeConfigFile } from '~/utils/file'
-import { useCompress, useExtra, useInput, useOutput } from './composables/select'
-import { useError } from './composables/error'
+import { useSelectFileTasks, useSelectFiles, useSelectFolder } from '~/composables/select'
+import { useCompress } from '~/composables/compress'
+import { useError } from '~/composables/error'
+import { Config, FileTask } from '~/types'
 
-import ConfigDropdown from './ConfigDropdown.vue'
-import { Config } from '~/interfaces'
+//SECTION - 核心变量和修改方法
+const {
+  files: inputFiles,
+  selectFileTasks: setInputFiles,
+  clearFiles: clearInputFiles,
+} = useSelectFileTasks()
+const { files: extraFiles, selectFiles: setExtraFiles } = useSelectFiles()
+const { folder: outputDirectory, setFolder: setOutputDirectory } = useSelectFolder()
+const { error, hasError } = useError()
+const password = ref('')
 
-const { inputFiles, setInputFiles, clearInputFiles } = useInput()
-const { inputExtraFiles, setInputExtraFiles } = useExtra()
-const { outputDirectory, password, setOutputDirectory } = useOutput()
 const { isRunEnabled, run } = useCompress({
   inputFiles,
-  inputExtraFiles,
   outputDirectory,
+  extraFiles,
   password,
 })
-const { error, hasError } = useError()
+//!SECTION
 
 const configFile = ref<{ configures: Config[] }>({
   configures: [],
 })
 const currentConfig = ref<Config>({
   name: '',
-  defaultExtraDirectory: [],
-  defaultOutputDirectory: '',
-  defaultPassword: '',
+  id: 0,
+  get defaultExtraFiles() {
+    return extraFiles.value
+  },
+  set defaultExtraFiles(value) {
+    extraFiles.value = value
+  },
+  get defaultOutputDirectory() {
+    return outputDirectory.value
+  },
+  set defaultOutputDirectory(value) {
+    outputDirectory.value = value
+  },
+  get defaultPassword() {
+    return password.value
+  },
+  set defaultPassword(value) {
+    password.value = value
+  },
 })
 
 function readConfig() {
@@ -42,25 +107,20 @@ function readConfig() {
 }
 
 function onSelectConfig(config: Config) {
-  currentConfig.value = config
-  inputExtraFiles.value = config.defaultExtraDirectory
-  outputDirectory.value = config.defaultOutputDirectory
-  password.value = config.defaultPassword
+  Object.assign(currentConfig.value, config)
 }
 
-function onSaveConfig() {
-  const index = configFile.value.configures.findIndex(
-    (config) => config.name === currentConfig.value.name
-  )
-  // build new config
+function onSaveConfig(config: Config) {
+  const index = configFile.value.configures.findIndex((c) => c.id === config.id)
   configFile.value.configures[index] = {
-    ...currentConfig.value,
-    defaultExtraDirectory: inputExtraFiles.value,
-    defaultOutputDirectory: outputDirectory.value,
-    defaultPassword: password.value,
+    ...config,
   }
 
   writeConfigFile(JSON.stringify(configFile.value, null, 2))
+}
+
+function onDropFiles(files: FileTask[]) {
+  inputFiles.value.push(...files)
 }
 
 onBeforeMount(() => {
@@ -69,82 +129,9 @@ onBeforeMount(() => {
 })
 </script>
 
-<template>
-  <section class="config">
-    <ConfigDropdown
-      :configures="configFile.configures"
-      :current-config="currentConfig"
-      @select:config="onSelectConfig"
-      @save:config="onSaveConfig"
-    />
-  </section>
-  <section>
-    <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
-    <p class="output-directory">{{ outputDirectory || '未选择输出文件夹' }}</p>
-  </section>
-
-  <section>
-    <div>
-      <var-button type="info" @click="setInputExtraFiles">选择附加文件</var-button>
-    </div>
-    <div v-if="inputExtraFiles.length">
-      <p :key="index" v-for="(file, index) in inputExtraFiles" class="file-row">
-        文件 {{ index + 1 }} : {{ file }}
-      </p>
-    </div>
-    <p v-else class="file-row">无附加文件</p>
-  </section>
-
-  <section class="password">
-    <var-input v-model="password" placeholder="压缩密码" :line="false" />
-  </section>
-
-  <section>
-    <var-space>
-      <var-button type="primary" @click="setInputFiles">选择输入文件</var-button>
-      <var-button type="warning" @click="clearInputFiles">清空列表</var-button>
-      <var-button type="success" @click="run" :disabled="!isRunEnabled">开始压缩</var-button>
-    </var-space>
-    <div v-if="inputFiles.length">
-      <var-row :key="index" v-for="(file, index) in inputFiles" class="file-row">
-        <var-col :span="16"> 文件 {{ index + 1 }} : {{ basename(file.filePath) }} </var-col>
-        <var-col :span="8" class="file-processing">
-          <var-loading v-if="file.processing" type="cube" color="#00c48f" />
-          <var-icon
-            v-if="file.done"
-            name="checkbox-marked-circle"
-            :size="24"
-            color="var(--color-success)"
-          />
-        </var-col>
-      </var-row>
-    </div>
-    <p v-else class="file-row">未选择输入文件</p>
-  </section>
-
-  <var-snackbar
-    v-model:show="hasError"
-    :duration="10000"
-    type="error"
-    position="bottom"
-    content-class="error"
-  >
-    {{ error }}
-  </var-snackbar>
-</template>
-
 <style lang="scss">
 .config {
   margin-bottom: 20px;
-}
-
-.file-row {
-  padding: 10px 12px;
-  font-size: 14px;
-
-  .file-processing {
-    justify-content: flex-end;
-  }
 }
 
 .password {

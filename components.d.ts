@@ -10,10 +10,14 @@ export {}
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
     ConfigDropdown: typeof import('./src/components/ConfigDropdown.vue')['default']
+    DialogSaveConfig: typeof import('./src/components/DialogSaveConfig.vue')['default']
+    ExtraFile: typeof import('./src/components/ExtraFile.vue')['default']
+    FileBoard: typeof import('./src/components/FileBoard.vue')['default']
     FileSelect: typeof import('./src/components/FileSelect.vue')['default']
     VarButton: typeof import('@varlet/ui')['_ButtonComponent']
     VarCell: typeof import('@varlet/ui')['_CellComponent']
     VarCol: typeof import('@varlet/ui')['_ColComponent']
+    VarDialog: typeof import('@varlet/ui')['_DialogComponent']
     VarIcon: typeof import('@varlet/ui')['_IconComponent']
     VarInput: typeof import('@varlet/ui')['_InputComponent']
     VarLoading: typeof import('@varlet/ui')['_LoadingComponent']

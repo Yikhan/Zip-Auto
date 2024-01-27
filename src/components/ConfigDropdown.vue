@@ -1,8 +1,27 @@
-<script setup lang="ts">
-import { PropType, onBeforeMount, ref } from 'vue'
-import { Config } from '~/interfaces'
+<template>
+  <var-space>
+    <var-menu offset-x="120px" offset-y="18px" v-model:show="show">
+      <var-button type="primary">选择预设配置</var-button>
+      <template #menu>
+        <var-cell v-for="config in configures" class="config-item" @click="onSelectConfig(config)">
+          {{ config.name }}
+          <var-icon
+            v-if="config.name === currentConfig?.name"
+            name="checkbox-marked-circle"
+            color="var(--color-primary)"
+          />
+        </var-cell>
+      </template>
+    </var-menu>
+    <DialogSaveConfig :current-config="currentConfig" @save:config="onSaveConfig"/>
+  </var-space>
+</template>
 
-const props = defineProps({
+<script setup lang="ts">
+import { PropType, ref } from 'vue'
+import { Config } from '~/types'
+
+defineProps({
   configures: {
     type: Array as PropType<Config[]>,
     default: [],
@@ -15,7 +34,7 @@ const props = defineProps({
 
 const emit = defineEmits<{
   (e: 'select:config', value: Config): void
-  (e: 'save:config'): void
+  (e: 'save:config', value: Config): void
 }>()
 
 const show = ref(false)
@@ -29,26 +48,10 @@ function closeMenu() {
   show.value = false
 }
 
-function onSaveConfig() {
-  emit('save:config')
+function onSaveConfig(value: Config) {
+  emit('save:config', value)
 }
 </script>
-<template>
-  <var-menu offset-x="120px" offset-y="18px" v-model:show="show">
-    <var-button type="primary" style="margin-right: 10px">选择预设配置</var-button>
-    <template #menu>
-      <var-cell v-for="config in configures" class="config-item" @click="onSelectConfig(config)">
-        {{ config.name }}
-        <var-icon
-          v-if="config.name === currentConfig?.name"
-          name="checkbox-marked-circle"
-          color="var(--color-primary)"
-        />
-      </var-cell>
-    </template>
-  </var-menu>
-  <var-button type="success" @click="onSaveConfig">保存当前配置</var-button>
-</template>
 
 <style lang="scss">
 .config-item {
