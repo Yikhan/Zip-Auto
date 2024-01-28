@@ -56,7 +56,7 @@ async function createWindow() {
     minWidth: 500,
     minHeight: 600,
     width: 800,
-    height: 700,
+    height: 720,
   })
 
   if (process.env.VITE_DEV_SERVER_URL) {
