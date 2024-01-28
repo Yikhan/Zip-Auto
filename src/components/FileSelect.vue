@@ -18,12 +18,12 @@
   </section>
 
   <section>
-    <ExtraFile :extra-files="extraFiles" @select:file="setExtraFiles" />
+    <ExtraFile :extra-files="currentConfig.defaultExtraFiles" @select:file="() => setExtraFiles(true)" />
   </section>
 
   <section>
     <var-space>
-      <var-button type="primary" @click="setInputFiles">选择输入文件</var-button>
+      <var-button type="primary" @click="() => setInputFiles()">选择输入文件</var-button>
       <var-button type="warning" @click="clearInputFiles">清空列表</var-button>
       <var-button type="success" @click="run" :disabled="!isRunEnabled">开始压缩</var-button>
     </var-space>
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
+import { onBeforeMount, ref, reactive } from 'vue'
 
 import { readConfigFile, writeConfigFile } from '~/utils/file'
 import { useSelectFileTasks, useSelectFiles, useSelectFolder } from '~/composables/select'
@@ -56,7 +56,10 @@ const {
   selectFileTasks: setInputFiles,
   clearFiles: clearInputFiles,
 } = useSelectFileTasks()
-const { files: extraFiles, selectFiles: setExtraFiles } = useSelectFiles()
+const {
+  files: extraFiles,
+  selectFiles: setExtraFiles
+} = useSelectFiles()
 const { folder: outputDirectory, setFolder: setOutputDirectory } = useSelectFolder()
 const { error, hasError } = useError()
 const password = ref('')
@@ -72,7 +75,7 @@ const { isRunEnabled, run } = useCompress({
 const configFile = ref<{ configures: Config[] }>({
   configures: [],
 })
-const currentConfig = ref<Config>({
+const currentConfig = reactive<Config>({
   name: '',
   id: 0,
   get defaultExtraFiles() {
@@ -107,7 +110,7 @@ function readConfig() {
 }
 
 function onSelectConfig(config: Config) {
-  Object.assign(currentConfig.value, config)
+  Object.assign(currentConfig, config)
 }
 
 function onSaveConfig(config: Config) {

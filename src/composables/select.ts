@@ -5,9 +5,13 @@ import { invoke } from '~/utils/channel'
 export function useSelectFileTasks() {
   const files = ref<FileTask[]>([])
 
-  async function selectFileTasks() {
+  async function selectFileTasks(isClear = false) {
     const result = await invoke('open-files')
     if (!result) return
+
+    if (isClear) {
+      clearFiles()
+    }
 
     result.filePaths.forEach((file: string) => {
       files.value.push({
@@ -19,7 +23,7 @@ export function useSelectFileTasks() {
   }
 
   function clearFiles() {
-    files.value.splice(0, files.value.length)
+    files.value = []
   }
 
   return {
@@ -32,9 +36,13 @@ export function useSelectFileTasks() {
 export function useSelectFiles() {
   const files = ref<string[]>([])
 
-  async function selectFiles() {
+  async function selectFiles(isClear = false) {
     const result = await invoke('open-files')
     if (!result) return
+
+    if (isClear) {
+      clearFiles()
+    }
 
     result.filePaths.forEach((file: string) => {
       files.value.push(file)
@@ -42,7 +50,7 @@ export function useSelectFiles() {
   }
 
   function clearFiles() {
-    files.value.splice(0, files.value.length)
+    files.value = []
   }
 
   return {

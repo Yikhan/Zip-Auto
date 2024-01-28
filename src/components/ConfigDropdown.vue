@@ -6,7 +6,7 @@
         <var-cell v-for="config in configures" class="config-item" @click="onSelectConfig(config)">
           {{ config.name }}
           <var-icon
-            v-if="config.name === currentConfig?.name"
+            v-if="config.id === currentConfig.id"
             name="checkbox-marked-circle"
             color="var(--color-primary)"
           />
