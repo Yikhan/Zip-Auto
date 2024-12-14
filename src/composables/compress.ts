@@ -10,8 +10,9 @@ export function useCompress(options: {
   outputDirectory: Ref<string>
   extraFiles: Ref<string[]>
   password: Ref<string>
+  suffix: Ref<string>
 }) {
-  const { inputFiles, outputDirectory, extraFiles, password } = options
+  const { inputFiles, outputDirectory, extraFiles, password, suffix } = options
 
   const isRunning = ref(false)
   const isRunEnabled = computed(() => {
@@ -48,7 +49,7 @@ export function useCompress(options: {
       await compressFile({
         filePath: filePathFromLastStep,
         outputDirectory: outputDirectory.value,
-        fileSuffix: '.video',
+        fileSuffix: `.${suffix.value}`,
         extraFils: extraFiles.value,
       })
 

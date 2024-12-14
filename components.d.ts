@@ -22,6 +22,8 @@ declare module '@vue/runtime-core' {
     VarInput: typeof import('@varlet/ui')['_InputComponent']
     VarLoading: typeof import('@varlet/ui')['_LoadingComponent']
     VarMenu: typeof import('@varlet/ui')['_MenuComponent']
+    VarMenuOption: typeof import('@varlet/ui')['_MenuOptionComponent']
+    VarMenuSelect: typeof import('@varlet/ui')['_MenuSelectComponent']
     VarRow: typeof import('@varlet/ui')['_RowComponent']
     VarSnackbar: typeof import('@varlet/ui')['_SnackbarComponent']
     VarSpace: typeof import('@varlet/ui')['_SpaceComponent']

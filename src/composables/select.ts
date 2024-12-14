@@ -1,6 +1,7 @@
-import { ref } from 'vue'
+import { computed, Ref, ref } from 'vue'
 import { FileTask } from '~/types'
 import { invoke } from '~/utils/channel'
+import { dirname } from 'path'
 
 export function useSelectFileTasks() {
   const files = ref<FileTask[]>([])
@@ -65,8 +66,11 @@ export function useSelectFolder() {
 
   async function setFolder() {
     const result = await invoke('open-folder')
-    if (!result) return
-
+    console.log(result)
+    if (!result || result.canceled) {
+      return
+    }
+    
     folder.value = result.filePaths[0]
   }
 

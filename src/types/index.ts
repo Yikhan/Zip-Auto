@@ -9,5 +9,6 @@ export type Config = {
   defaultExtraFiles: string[]
   defaultOutputDirectory: string
   defaultPassword: string
+  defaultSuffix: string
   id: number
 }

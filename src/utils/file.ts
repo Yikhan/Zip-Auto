@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs'
-import { join, dirname } from 'path'
+import { join } from 'path'
 
 const configFilePath = join(process.cwd(), 'config', 'config.json')
 

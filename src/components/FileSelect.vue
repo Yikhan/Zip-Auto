@@ -9,16 +9,30 @@
   </section>
 
   <section>
-    <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
+    <var-space direction="row">
+      <var-button type="primary" @click="setOutputDirectory">选择输出文件夹</var-button>
+      <var-menu-select v-model="outputDirectory" placement="right-start">
+        <var-button type="info">使用输入文件的路径</var-button>
+        <template #options>
+          <var-menu-option v-for="dir in uniqueInputFileDirs" :label="dir" :key="dir" />
+        </template>
+      </var-menu-select>
+    </var-space>
     <p class="output-directory">{{ outputDirectory || '未选择输出文件夹' }}</p>
   </section>
 
   <section class="password">
     <var-input v-model="password" placeholder="压缩密码" :line="false" />
   </section>
+  <section class="suffix">
+    <var-input v-model="suffix" placeholder="后缀名" :line="false" />
+  </section>
 
   <section>
-    <ExtraFile :extra-files="currentConfig.defaultExtraFiles" @select:file="() => setExtraFiles(true)" />
+    <ExtraFile
+      :extra-files="currentConfig.defaultExtraFiles"
+      @select:file="() => setExtraFiles(true)"
+    />
   </section>
 
   <section>
@@ -42,8 +56,8 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeMount, ref, reactive } from 'vue'
-
+import { onBeforeMount, ref, reactive, computed } from 'vue'
+import { dirname } from 'path'
 import { readConfigFile, writeConfigFile } from '~/utils/file'
 import { useSelectFileTasks, useSelectFiles, useSelectFolder } from '~/composables/select'
 import { useCompress } from '~/composables/compress'
@@ -56,19 +70,22 @@ const {
   selectFileTasks: setInputFiles,
   clearFiles: clearInputFiles,
 } = useSelectFileTasks()
-const {
-  files: extraFiles,
-  selectFiles: setExtraFiles
-} = useSelectFiles()
+const { files: extraFiles, selectFiles: setExtraFiles } = useSelectFiles()
 const { folder: outputDirectory, setFolder: setOutputDirectory } = useSelectFolder()
 const { error, hasError } = useError()
 const password = ref('')
+const suffix = ref('zip')
 
 const { isRunEnabled, run } = useCompress({
   inputFiles,
   outputDirectory,
   extraFiles,
   password,
+  suffix,
+})
+
+const uniqueInputFileDirs = computed(() => {
+  return Array.from(new Set(inputFiles.value.map((file) => dirname(file.filePath)))).sort()
 })
 //!SECTION
 
@@ -95,6 +112,12 @@ const currentConfig = reactive<Config>({
   },
   set defaultPassword(value) {
     password.value = value
+  },
+  get defaultSuffix() {
+    return suffix.value
+  },
+  set defaultSuffix(value) {
+    suffix.value = value
   },
 })
 
@@ -138,6 +161,11 @@ onBeforeMount(() => {
 }
 
 .password {
+  margin-bottom: 20px;
+  padding-left: 12px;
+}
+
+.suffix {
   margin-bottom: 20px;
   padding-left: 12px;
 }
