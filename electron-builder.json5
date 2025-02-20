@@ -29,4 +29,5 @@
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
   },
+  compression: 'maximum', // 启用最大化压缩
 }
