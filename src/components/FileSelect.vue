@@ -29,7 +29,15 @@
   </section>
 
   <section class="archive-comment">
-    <var-input v-model="archiveComment" placeholder="压缩注释" :line="false" />
+    <var-space direction="row" align="center" :size="12" class="archive-comment-row">
+      <var-input
+        v-model="archiveComment"
+        placeholder="压缩注释"
+        :line="false"
+        class="archive-comment-input"
+      />
+      <var-button type="info" @click="refreshArchiveComment">刷新注释</var-button>
+    </var-space>
   </section>
 
   <section>
@@ -79,7 +87,7 @@ const { folder: outputDirectory, setFolder: setOutputDirectory } = useSelectFold
 const { error, hasError } = useError()
 const password = ref('')
 const suffix = ref('zip')
-const archiveComment = ref(new Date().toISOString().slice(0, 19).replace('T', ' '))
+const archiveComment = ref(formatTimestampComment())
 
 const { isRunEnabled, run } = useCompress({
   inputFiles,
@@ -155,6 +163,14 @@ function onDropFiles(files: FileTask[]) {
   inputFiles.value.push(...files)
 }
 
+function formatTimestampComment() {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ')
+}
+
+function refreshArchiveComment() {
+  archiveComment.value = formatTimestampComment()
+}
+
 onBeforeMount(() => {
   readConfig()
   onSelectConfig(configFile.value.configures[0])
@@ -179,6 +195,14 @@ onBeforeMount(() => {
 .archive-comment {
   margin-bottom: 20px;
   padding-left: 12px;
+}
+
+.archive-comment-row {
+  width: 100%;
+}
+
+.archive-comment-input {
+  flex: 1;
 }
 
 .output-directory {
