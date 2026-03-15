@@ -7,8 +7,16 @@ export async function compressFile(options: {
   fileSuffix?: string
   extraFils?: string[]
   password?: string
+  archiveComment?: string
 }) {
-  const { filePath, outputDirectory, fileSuffix = '', extraFils = [], password = '' } = options
+  const {
+    filePath,
+    outputDirectory,
+    fileSuffix = '',
+    extraFils = [],
+    password = '',
+    archiveComment = '',
+  } = options
 
   let outputFileName = parse(filePath).name
   // add customized suffix
@@ -17,7 +25,11 @@ export async function compressFile(options: {
   }
 
   const fullOutputPath = join(outputDirectory, outputFileName)
-  const switches = [password ? ` -p:${password}` : '']
+  const escapedComment = archiveComment.replace(/"/g, '\\"')
+  const switches = [
+    password ? ` -p:${password}` : '',
+    archiveComment ? ` -cmt:"${escapedComment}"` : '',
+  ]
   // base command of Bandizip
   let compressCommand = `Bandizip.exe a`
   // add all switches

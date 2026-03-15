@@ -28,6 +28,10 @@
     <var-input v-model="suffix" placeholder="后缀名" :line="false" />
   </section>
 
+  <section class="archive-comment">
+    <var-input v-model="archiveComment" placeholder="压缩注释" :line="false" />
+  </section>
+
   <section>
     <ExtraFile
       :extra-files="currentConfig.defaultExtraFiles"
@@ -75,6 +79,7 @@ const { folder: outputDirectory, setFolder: setOutputDirectory } = useSelectFold
 const { error, hasError } = useError()
 const password = ref('')
 const suffix = ref('zip')
+const archiveComment = ref(new Date().toISOString().slice(0, 19).replace('T', ' '))
 
 const { isRunEnabled, run } = useCompress({
   inputFiles,
@@ -82,6 +87,7 @@ const { isRunEnabled, run } = useCompress({
   extraFiles,
   password,
   suffix,
+  archiveComment,
 })
 
 const uniqueInputFileDirs = computed(() => {
@@ -166,6 +172,11 @@ onBeforeMount(() => {
 }
 
 .suffix {
+  margin-bottom: 20px;
+  padding-left: 12px;
+}
+
+.archive-comment {
   margin-bottom: 20px;
   padding-left: 12px;
 }

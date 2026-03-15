@@ -11,8 +11,9 @@ export function useCompress(options: {
   extraFiles: Ref<string[]>
   password: Ref<string>
   suffix: Ref<string>
+  archiveComment: Ref<string>
 }) {
-  const { inputFiles, outputDirectory, extraFiles, password, suffix } = options
+  const { inputFiles, outputDirectory, extraFiles, password, suffix, archiveComment } = options
 
   const isRunning = ref(false)
   const isRunEnabled = computed(() => {
@@ -51,6 +52,7 @@ export function useCompress(options: {
         outputDirectory: outputDirectory.value,
         fileSuffix: `.${suffix.value}`,
         extraFils: extraFiles.value,
+        archiveComment: archiveComment.value,
       })
 
       // 删除上一步生成的临时zip文件
