@@ -34,6 +34,7 @@ export function useCompress(options: {
         fileSuffix: '.zip',
         extraFils: [],
         password: password.value,
+        archiveComment: archiveComment.value,
       })
     }
   }
