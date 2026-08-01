@@ -152,8 +152,16 @@ function onSelectConfig(config: Config) {
 
 function onSaveConfig(config: Config) {
   const index = configFile.value.configures.findIndex((c) => c.id === config.id)
-  configFile.value.configures[index] = {
-    ...config,
+
+  if (index === -1) {
+    const newId =
+      configFile.value.configures.reduce((max, c) => Math.max(max, c.id), 0) + 1
+    currentConfig.id = newId
+    configFile.value.configures.push({ ...config, id: newId })
+  } else {
+    configFile.value.configures[index] = {
+      ...config,
+    }
   }
 
   writeConfigFile(JSON.stringify(configFile.value, null, 2))
